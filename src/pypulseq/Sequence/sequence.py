@@ -310,7 +310,7 @@ class Sequence:
         t_refocusing : List[float]
             Refocusing timepoints.
         t_adc : numpy.array
-            Sampling timepoints.
+            `k_traj_adc` sampling timepoints.
 
         OR
 
@@ -325,7 +325,9 @@ class Sequence:
                 t_refocusing : List[float]
                     Refocusing timepoints.
                 t_adc : numpy.array
-                    Sampling timepoints.
+                    `k_traj_adc` sampling timepoints.
+                t_ktraj : numpy.array
+                    `k_traj` sampling timepoints.
         """
         if np.any(np.abs(trajectory_delay) > 100e-6):
             raise Warning(f'Trajectory delay of {trajectory_delay * 1e6} us is suspiciously high')
@@ -477,6 +479,7 @@ class Sequence:
                     "t_excitation":t_excitation,
                     "t_refocusing":t_refocusing,
                     "t_adc":t_adc,
+                    "t_ktraj":t_ktraj,
             }
             return data
 
