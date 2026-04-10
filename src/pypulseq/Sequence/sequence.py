@@ -2,7 +2,7 @@ import math
 from collections import OrderedDict
 from copy import deepcopy
 from types import SimpleNamespace
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 from warnings import warn
 
 try:
@@ -277,7 +277,8 @@ class Sequence:
         self,
         trajectory_delay: Union[float, List[float], np.ndarray] = 0.0,
         gradient_offset: Union[float, List[float], np.ndarray] = 0.0,
-    ) -> Tuple[np.ndarray, np.ndarray, List[float], List[float], np.ndarray]:
+        output_dict: bool = False,
+    ) -> Tuple[np.ndarray, np.ndarray, List[float], List[float], np.ndarray] | Dict[str, Any]:
         """
         Calculates the k-space trajectory of the entire pulse sequence.
 
@@ -293,6 +294,10 @@ class Sequence:
             If gradient_offset is a single value, this value will be used for all gradient channels.
             If gradient_offset is a list or array, it is expected to have the same length as the number of gradient
             channels and the first element is applied to the first gradient channel, the second to the second, and so on.
+        output_dict : bool, default=False
+            Tells the function whether to output results as a tuple (old method) or as a dict (new method).
+            The new method should be preferred for new code as it allows easy extension of the output, but
+            the old method is preserved for backwards compatibility.
 
         Returns
         -------
@@ -306,6 +311,21 @@ class Sequence:
             Refocusing timepoints.
         t_adc : numpy.array
             Sampling timepoints.
+
+        OR
+
+        data : dict
+            Dictionary containing sequence information with the following keys:
+                k_traj_adc : numpy.array
+                    K-space trajectory sampled at `t_adc` timepoints.
+                k_traj : numpy.array
+                    K-space trajectory of the entire pulse sequence.
+                t_excitation : List[float]
+                    Excitation timepoints.
+                t_refocusing : List[float]
+                    Refocusing timepoints.
+                t_adc : numpy.array
+                    Sampling timepoints.
         """
         if np.any(np.abs(trajectory_delay) > 100e-6):
             raise Warning(f'Trajectory delay of {trajectory_delay * 1e6} us is suspiciously high')
@@ -448,7 +468,17 @@ class Sequence:
         k_traj[:, i_period_end] = k_traj[:, i_period_end] + dk
         k_traj_adc = k_traj[:, i_adc]
 
-        return k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc
+        if output_dict == False:
+            # old output method, might be deprecated
+            return k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc
+        else:
+            data = {"k_traj_adc":k_traj_adc,
+                    "k_traj":k_traj,
+                    "t_excitation":t_excitation,
+                    "t_refocusing":t_refocusing,
+                    "t_adc":t_adc,
+            }
+            return data
 
     def calculate_kspacePP(
         self,
